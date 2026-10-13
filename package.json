@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "web-ext lint --source-dir extension --warnings-as-errors",
     "build": "web-ext build --source-dir extension --artifacts-dir dist --overwrite-dest",
-    "test": "node tests/extension.test.cjs",
+    "test": "node --test tests/extension.test.cjs tests/release.test.cjs",
     "test:ui": "node tests/browser.test.cjs",
     "start": "web-ext run --source-dir extension"
   },

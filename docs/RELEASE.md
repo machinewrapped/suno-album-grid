@@ -18,3 +18,14 @@ AMO manages updates for publicly listed versions, so no custom update_url is inc
 ## Future releases
 
 Increment extension/manifest.json and package.json versions together. Document changes in CHANGELOG.md. Repeat validation and upload the new version to the existing AMO listing, rather than creating a second listing. Update the API/DOM selectors if Suno changes its implementation.
+
+## Automatic GitHub releases
+
+Pushing a tag such as v1.0.1 runs .github/workflows/release.yml. It verifies that the tag matches package.json and extension/manifest.json, installs locked tools, runs Mozilla lint plus unit/browser tests, builds the ZIP, and creates a public GitHub Release with the ZIP and SHA256SUMS.txt attached. GitHub also provides automatic source archives.
+
+After updating versions (including package-lock.json), the changelog, and committing/pushing the changes:
+
+    git tag -a v1.0.1 -m "Release 1.0.1"
+    git push origin v1.0.1
+
+Use a new matching version for each release. Only vMAJOR.MINOR.PATCH tags are supported. The workflow uses GitHub's built-in token; no additional repository secret is needed. It publishes an unsigned submission ZIP and does not submit to Mozilla or provide a permanently installable signed XPI. A failed validation prevents release creation. Rerunning a completed release job will fail if that release already exists; this avoids silently replacing previously published assets.
