@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "Album Grid for Suno",
+  "version": "1.0.0",
+  "description": "Unofficial Suno enhancement: album List/Grid views, playable video artwork and smaller bottom-right now-playing icons.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://studio-api.prod.suno.com/*"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "suno-album-grid@local.invalid",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "browsingActivity"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://suno.com/*"
+      ],
+      "js": [
+        "adapter.js",
+        "album-grid.js"
+      ],
+      "css": [
+        "album-grid.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "incognito": "not_allowed",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  }
+}

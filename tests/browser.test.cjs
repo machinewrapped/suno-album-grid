@@ -1,0 +1,114 @@
+const fs=require('fs');
+const path=require('path');
+const assert=require('assert/strict');
+const {chromium}=require('playwright');
+const dir=path.resolve(__dirname,'../extension');
+fs.mkdirSync(path.resolve(__dirname,'../artifacts'),{recursive:true});
+const css=fs.readFileSync(path.join(dir,'album-grid.css'),'utf8');
+const js=fs.readFileSync(path.join(dir,'album-grid.js'),'utf8');
+const iconCss=css;
+const album={playlist_clips:Array.from({length:7},(_,index)=>({clip:{id:'00000000-0000-4000-8000-'+String(index+1).padStart(12,'0'),title:'Demo track '+(index+1),image_url:'https://cdn2.suno.ai/demo-'+index+'.svg',video_cover_url:'https://cdn1.suno.ai/demo-'+index+'.mp4',display_tags:'Example genre',metadata:{duration:236}}})),num_total_results:7};
+const clips=album.playlist_clips.map(e=>e.clip);
+const url='https://suno.com/album/f13881c5-7e76-4835-82c5-74d5209972c7';
+const nativeCss=`.album-controls{display:flex;width:100%;align-items:center;gap:8px}.native-controls{display:flex;gap:12px;align-items:center}.native-controls button{height:56px;min-width:56px}*{box-sizing:border-box}body{margin:0;background:#101011;color:#eee;font:14px system-ui}main{padding:24px;max-width:1100px;margin:auto}h1{font-size:40px}ul{display:flex;flex-direction:column;gap:4px;padding:0;list-style:none}.clip-row-collection{display:flex;align-items:center;justify-content:space-between;gap:16px;height:88px;padding:12px;border-radius:20px;container-type:size}.e3ya7511{display:flex;align-items:center;flex-shrink:0}.e3ya7512{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}.clip-title-wrapper{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}.right{max-width:60%;display:flex;gap:12px}.actions{display:flex;gap:8px}a{color:inherit;text-decoration:none}button{background:#28282b;color:inherit;border:0;border-radius:100px;padding:10px;font:inherit;cursor:pointer}.track{width:40px;height:60px}.hover-only{opacity:0}.clip-row-collection:hover .hover-only{opacity:1}`;
+function row(clip,index){
+ const li=document.createElement('li');
+ const row=document.createElement('div');row.className='clip-row group clip-row-collection';row.setAttribute('role','group');row.setAttribute('aria-label',clip.title);
+ const left=document.createElement('div');left.className='e3ya7511';
+ const play=document.createElement('button');play.className='track';play.setAttribute('aria-label','Play '+clip.title);play.setAttribute('aria-disabled','false');play.textContent=String(index+1);
+ play.addEventListener('click',()=>{window.nativeClicks=(window.nativeClicks||0)+1; const active=play.getAttribute('aria-label').startsWith('Pause');play.setAttribute('aria-label',(active?'Play ':'Pause ')+clip.title);});left.append(play);
+ const center=document.createElement('div');center.className='e3ya7512';
+ const title=document.createElement('div');title.className='clip-title-wrapper';const link=document.createElement('a');link.href='/song/'+clip.id;link.textContent=clip.title;title.append(link);
+ const metadata=document.createElement('div');metadata.textContent=(clip.display_tags||clip.metadata.tags||'').slice(0,100);metadata.style.cssText='color:#aaa;font-size:12px;overflow:hidden;max-height:34px';center.append(title,metadata);
+ const right=document.createElement('div');right.className='right';right.innerHTML='<span>3:56</span><div class="actions"><button class="hover-only" aria-label="Remix">Remix</button><button aria-label="Like">♡</button><button aria-label="More options">•••</button></div>';
+ row.append(left,center,right);li.append(row);return li;
+}
+(async()=>{
+ const browser=await chromium.launch({...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}),headless:true});
+ try{
+  const context=await browser.newContext({viewport:{width:1100,height:1000},reducedMotion:'reduce'});
+  await context.addInitScript(()=>{
+    // Deterministic offline checks for preview lifecycle; no third-party media is downloaded.
+    const playing=new WeakSet();
+    Object.defineProperty(HTMLMediaElement.prototype,'paused',{get(){return !playing.has(this);}});
+    Object.defineProperty(HTMLMediaElement.prototype,'readyState',{get(){return this.src?4:0;}});
+    HTMLMediaElement.prototype.play=function(){playing.add(this);queueMicrotask(()=>this.dispatchEvent(new Event('playing')));return Promise.resolve();};
+    HTMLMediaElement.prototype.pause=function(){playing.delete(this);};
+  });
+  await context.route('https://cdn2.suno.ai/**',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#19343a"/><circle cx="150" cy="150" r="95" fill="#ff9248"/><path d="m130 100 70 50-70 50z" fill="#17171e"/></svg>'}));
+  await context.route('https://cdn1.suno.ai/**',route=>route.fulfill({body:''}));
+  await context.route('https://suno.com/**',route=>route.fulfill({contentType:'text/html',body:`<!doctype html><meta charset="utf-8"><style>${nativeCss}</style><main><h1>Demo album</h1><p style="color:#aaa">Album Grid for Suno · automated layout fixture</p><div class="album-controls flex w-full flex-row"><div class="native-controls flex flex-row"><button aria-label="Play album">▶ Play</button><button aria-label="Shuffle album">⇄</button><button aria-label="Share album">↗</button><button aria-label="More actions">•••</button></div></div><ul aria-label="6 songs"></ul></main>`}));
+  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(url);
+  await page.evaluate(({clips,rowSource})=>{window.createRow=eval('('+rowSource+')');for(const [index,clip] of clips.slice(0,6).entries())document.querySelector('ul').append(window.createRow(clip,index));},{clips,rowSource:row.toString()});
+  await page.evaluate(data=>{window.sunoAlbumGridTransport={getMode:async()=>localStorage.getItem('testMode')||'list',setMode:async value=>localStorage.setItem('testMode',value),getAlbumPage:async()=>data};},album);
+  await page.addStyleTag({content:css});await page.addScriptTag({content:js});
+  await page.locator('.sag-toolbar').waitFor();
+  assert.equal(await page.locator('.album-controls > .sag-toolbar').count(),1);
+  const alignment=await page.evaluate(()=>{const play=document.querySelector('[aria-label="Play album"]').getBoundingClientRect();const toggle=document.querySelector('.sag-toggle').getBoundingClientRect();return Math.abs((play.top+play.bottom)/2-(toggle.top+toggle.bottom)/2);});
+  assert(alignment<2,'List/Grid should share the playback row');
+  await page.evaluate(()=>document.querySelector('[aria-label="Play album"]').setAttribute('aria-label','Pause album'));
+  await page.waitForTimeout(50);
+  assert.equal(await page.locator('.album-controls > .sag-toolbar').count(),1);
+  // Header re-renders should reattach the same selector to the new control row.
+  await page.evaluate(()=>{const old=document.querySelector('.album-controls');const replacement=old.cloneNode(true);replacement.querySelector('.sag-toolbar').remove();old.replaceWith(replacement);});
+  await page.waitForFunction(()=>document.querySelector('.album-controls > .sag-toolbar'));
+  assert.equal(await page.locator('.sag-toolbar').count(),1);
+  assert.equal(await page.locator('ul').getAttribute('data-sag-view'),'list');
+  await page.getByRole('button',{name:'Grid',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelectorAll('.sag-media img').length===6);
+  assert.equal(await page.locator('.sag-media').count(),6);
+  const rects=await page.locator('ul>li').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width};}));
+  assert(rects[0].x<rects[1].x && rects[0].y===rects[1].y,'Desktop cards should form a grid');
+  await page.locator('.sag-media').first().click();
+  await page.waitForFunction(()=>document.querySelector('.sag-media').getAttribute('aria-label').startsWith('Pause'));
+  assert.equal(await page.evaluate(()=>window.nativeClicks),1,'Artwork must delegate to native player');
+  await page.getByRole('button',{name:'List',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='list');
+  assert.equal(await page.locator('.sag-media').first().isVisible(),false);
+  assert.equal(await page.locator('ul').evaluate(n=>getComputedStyle(n).display),'flex');
+  await page.getByRole('button',{name:'Grid',exact:true}).click();
+  await page.evaluate(({clip,rowSource})=>document.querySelector('ul').append(window.createRow(clip,6)),{clip:clips[6]});
+  await page.waitForFunction(()=>document.querySelectorAll('.sag-media img').length===7);
+  assert.equal(await page.locator('.sag-toolbar').count(),1,'No duplicate selector after row mutation');
+  await page.evaluate(()=>{history.pushState({},'', '/create');window.dispatchEvent(new PopStateEvent('popstate'));});
+  await page.waitForFunction(()=>!document.querySelector('.sag-toolbar'));
+  assert.equal(await page.locator('.sag-media').count(),0,'Injected artwork removed outside album pages');
+  assert.equal(await page.locator('.sag-controls-row').count(),0,'Header layout marker removed outside albums');
+  await page.evaluate(url=>{history.pushState({},'',url);window.dispatchEvent(new PopStateEvent('popstate'));},url);
+  await page.waitForFunction(()=>document.querySelectorAll('.sag-media').length===7);
+  assert.equal(await page.locator('ul').getAttribute('data-sag-view'),'grid');
+  await page.addScriptTag({content:js});assert.equal(await page.locator('.sag-toolbar').count(),1);
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sag-media img')].every(img=>img.complete && img.naturalWidth>0));
+  assert.equal(await page.locator('.sag-placeholder:not([hidden])').count(),0);
+  await page.screenshot({path:path.resolve(__dirname,'../artifacts/grid-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:400,height:900});await page.waitForTimeout(100);
+  const sizes=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,card:document.querySelector('.sag-media').getBoundingClientRect().width,icon:document.querySelector('.sag-play').getBoundingClientRect().width}));
+  assert(sizes.scroll<=sizes.width,'Grid must not overflow on mobile');assert.equal(sizes.icon,34);
+  await page.screenshot({path:path.resolve(__dirname,'../artifacts/grid-mobile.png'),fullPage:true});
+  // Exact native indicator structure supplied by the user.
+  await page.addStyleTag({content:iconCss});
+  await page.evaluate(()=>{const host=document.createElement('div');host.id='native-indicator-test';host.style='position:relative;width:300px;height:300px';host.innerHTML='<div class="absolute inset-0 z-20" style="position:absolute;inset:0"><button aria-label="Now playing" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68px;height:68px"><svg style="width:24px;height:24px"></svg></button></div>';document.body.append(host);});
+  const icon=await page.locator('#native-indicator-test button').evaluate(n=>{const r=n.getBoundingClientRect(),p=n.parentElement.getBoundingClientRect();return {w:r.width,h:r.height,right:p.right-r.right,bottom:p.bottom-r.bottom,svg:n.firstElementChild.getBoundingClientRect().width};});
+  assert.deepEqual(icon,{w:34,h:34,right:8,bottom:8,svg:12});
+  assert.deepEqual(errors,[]);
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.locator('.sag-media').nth(1).hover();
+  await page.waitForFunction(()=>{const video=document.querySelectorAll('.sag-media')[1]?.querySelector('video');return video && video.readyState>=2 && !video.paused;},{},{timeout:20000});
+  assert.equal(await page.locator('.sag-media').nth(1).locator('video').evaluate(v=>v.muted),true);
+  await page.getByRole('button',{name:'List',exact:true}).click();
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sag-media video')].every(v=>v.paused));
+  await page.getByRole('button',{name:'Grid',exact:true}).click();
+  // Separate page proves saved preference is read and failures leave List available.
+  const errorPage=await context.newPage();await errorPage.goto(url);
+  await errorPage.evaluate(({clip,rowSource})=>{document.querySelector('ul').append(eval('('+rowSource+')')(clip,0));window.sunoAlbumGridTransport={getMode:async()=>localStorage.getItem('testMode'),setMode:async()=>{},getAlbumPage:async()=>{throw new Error('Simulated API outage')}};},{clip:clips[0],rowSource:row.toString()});
+  await errorPage.evaluate(()=>document.querySelector('.album-controls').remove());
+  await errorPage.addStyleTag({content:css});await errorPage.addScriptTag({content:js});
+  await errorPage.getByText('Artwork unavailable — List view still works').waitFor();
+  assert.equal(await errorPage.locator('.sag-toolbar').evaluate(n=>n.nextElementSibling.tagName),'UL','Fall back above songs if playback controls are absent');
+  await errorPage.getByRole('button',{name:'List',exact:true}).click();
+  await errorPage.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='list');
+  assert.equal(await errorPage.locator('ul').getAttribute('data-sag-view'),'list');
+  console.log('PASS: desktop/mobile grid, native playback delegation, List restoration, dynamic rows, SPA navigation, duplicate injection, persisted mode, metadata failure, compact native indicator, no script errors.');
+ } finally {await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

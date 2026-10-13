@@ -1,0 +1,49 @@
+/* Suno Album Grid: only marked album lists are changed. */
+.sag-toolbar { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:12px; margin:12px 0 16px; font:inherit; color:var(--color-foreground-primary,#eee); }
+.sag-toolbar .sag-status { font-size:12px; color:var(--color-foreground-tertiary,#aaa); margin-right:auto; }
+.sag-toggle { display:inline-flex; gap:3px; padding:4px; border:1px solid #ffffff15; border-radius:999px; background:var(--color-background-glass-thin,#242426); }
+.sag-toggle button { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:0; border-radius:999px; padding:9px 15px; background:transparent; color:inherit; font:inherit; font-size:14px; cursor:pointer; }
+.sag-toggle button[aria-pressed="true"] { background:#f5f4f2; color:#151515; }
+.sag-toggle button:focus-visible, .sag-media:focus-visible { outline:2px solid #ff9852; outline-offset:3px; }
+.sag-toggle svg { width:17px; height:17px; }
+ul[data-sag-view="grid"] { display:grid !important; grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr)) !important; gap:20px !important; align-items:start !important; padding:0 !important; list-style:none !important; }
+ul[data-sag-view="grid"] > li { min-width:0 !important; }
+ul[data-sag-view="grid"] .clip-row-collection { display:flex !important; flex-direction:column !important; align-items:stretch !important; justify-content:flex-start !important; width:100% !important; height:auto !important; min-height:0 !important; gap:12px !important; padding:12px !important; border-radius:20px !important; container-type:inline-size !important; background:var(--color-background-glass-thin,#ffffff06) !important; }
+ul[data-sag-view="grid"] .clip-row-collection > .e3ya7511 { display:none !important; }
+ul[data-sag-view="grid"] .clip-row-collection > .e3ya7512 { width:100% !important; flex:0 0 auto !important; min-width:0 !important; }
+ul[data-sag-view="grid"] .clip-title-wrapper { max-width:100% !important; white-space:normal !important; overflow:visible !important; text-overflow:clip !important; overflow-wrap:anywhere !important; font-size:16px !important; line-height:1.35 !important; }
+ul[data-sag-view="grid"] .clip-row-collection > :last-child:not(.sag-media):not(.e3ya7512) { width:100% !important; max-width:100% !important; flex-wrap:wrap !important; justify-content:space-between !important; }
+ul[data-sag-view="grid"] .hover-only, ul[data-sag-view="grid"] .hover-fade-in { opacity:1 !important; }
+.sag-media { position:relative; display:none; overflow:hidden; width:100%; aspect-ratio:1; padding:0; border:0; border-radius:12px; background:#19191c; color:white; cursor:pointer; flex-shrink:0; }
+ul[data-sag-view="grid"] .sag-media { display:block; }
+.sag-media img, .sag-media video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.sag-media video { opacity:0; pointer-events:none; }
+.sag-media.sag-video-ready video { opacity:1; }
+.sag-media .sag-play { position:absolute; bottom:12px; right:12px; display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:#111a; backdrop-filter:blur(12px); font-size:12px; pointer-events:none; }
+.sag-media .sag-placeholder { display:grid; place-items:center; position:absolute; inset:0; padding:16px; color:#aaa; font-size:13px; }
+@media(max-width:600px) { ul[data-sag-view="grid"] { grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr)) !important; gap:12px !important; } ul[data-sag-view="grid"] .clip-row-collection { padding:8px !important; } }
+.sag-media .sag-placeholder[hidden] { display:none !important; }
+
+/* Suno: compact now-playing artwork indicator (2026-10-13). */
+
+  .absolute.inset-0.z-20 > button[aria-label="Now playing"] {
+    top: auto !important;
+    left: auto !important;
+    right: 0.5rem !important;
+    bottom: 0.5rem !important;
+    width: 2.125rem !important;
+    height: 2.125rem !important;
+    padding: 0.5rem !important;
+    transform: none !important;
+    translate: none !important;
+    scale: 1 !important;
+  }
+  .absolute.inset-0.z-20 > button[aria-label="Now playing"] > svg {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+
+/* Share the album playback-controls row, wrapping if space is limited. */
+.sag-controls-row { flex-wrap:wrap !important; gap:12px !important; }
+.sag-toolbar.sag-toolbar-inline { margin:0 0 0 auto; flex:0 1 auto; max-width:100%; align-self:center; }
+.sag-toolbar .sag-status:empty { display:none; }
