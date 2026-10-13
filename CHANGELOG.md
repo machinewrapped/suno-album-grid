@@ -2,6 +2,10 @@
 
 ## 1.1.0 — 2026-10-13
 
+- Stack model/cover badges below the full-width title in Grid.
+
+- Hide relative dates and redundant Remix buttons in Grid, retaining them in List and retaining remix actions in the native menu.
+
 - Added Firefox Options with opt-in playlist List/Grid support.
 - Added toggles for muted video previews and the compact native now-playing indicator.
 - Apply settings to open tabs and remember album/playlist views separately.

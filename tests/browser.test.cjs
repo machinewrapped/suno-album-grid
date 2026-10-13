@@ -10,7 +10,7 @@ const iconCss=css;
 const album={playlist_clips:Array.from({length:7},(_,index)=>({clip:{id:'00000000-0000-4000-8000-'+String(index+1).padStart(12,'0'),title:'Demo track '+(index+1),image_url:'https://cdn2.suno.ai/demo-'+index+'.svg',video_cover_url:'https://cdn1.suno.ai/demo-'+index+'.mp4',display_tags:'Example genre',metadata:{duration:236}}})),num_total_results:7};
 const clips=album.playlist_clips.map(e=>e.clip);
 const url='https://suno.com/album/f13881c5-7e76-4835-82c5-74d5209972c7';
-const nativeCss=`.album-controls{display:flex;width:100%;align-items:center;gap:8px}.native-controls{display:flex;gap:12px;align-items:center}.native-controls button{height:56px;min-width:56px}*{box-sizing:border-box}body{margin:0;background:#101011;color:#eee;font:14px system-ui}main{padding:24px;max-width:1100px;margin:auto}h1{font-size:40px}ul{display:flex;flex-direction:column;gap:4px;padding:0;list-style:none}.clip-row-collection{display:flex;align-items:center;justify-content:space-between;gap:16px;height:88px;padding:12px;border-radius:20px;container-type:size}.e3ya7511{display:flex;align-items:center;flex-shrink:0}.e3ya7512{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}.clip-title-wrapper{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}.right{max-width:60%;display:flex;gap:12px}.actions{display:flex;gap:8px}a{color:inherit;text-decoration:none}button{background:#28282b;color:inherit;border:0;border-radius:100px;padding:10px;font:inherit;cursor:pointer}.track{width:40px;height:60px}.hover-only{opacity:0}.clip-row-collection:hover .hover-only{opacity:1}`;
+const nativeCss=`.title-line{display:flex;align-items:center;gap:8px}.title-owner{flex:1;min-width:0}.model-badge,.cover-badge{flex-shrink:0;font-size:11px;white-space:nowrap}.album-controls{display:flex;width:100%;align-items:center;gap:8px}.native-controls{display:flex;gap:12px;align-items:center}.native-controls button{height:56px;min-width:56px}*{box-sizing:border-box}body{margin:0;background:#101011;color:#eee;font:14px system-ui}main{padding:24px;max-width:1100px;margin:auto}h1{font-size:40px}ul{display:flex;flex-direction:column;gap:4px;padding:0;list-style:none}.clip-row-collection{display:flex;align-items:center;justify-content:space-between;gap:16px;height:88px;padding:12px;border-radius:20px;container-type:size}.e3ya7511{display:flex;align-items:center;flex-shrink:0}.e3ya7512{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}.clip-title-wrapper{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}.right{max-width:60%;display:flex;gap:12px}.actions{display:flex;gap:8px}a{color:inherit;text-decoration:none}button{background:#28282b;color:inherit;border:0;border-radius:100px;padding:10px;font:inherit;cursor:pointer}.track{width:40px;height:60px}.hover-only{opacity:0}.clip-row-collection:hover .hover-only{opacity:1}`;
 function row(clip,index){
  const li=document.createElement('li');
  const row=document.createElement('div');row.className='clip-row group clip-row-collection';row.setAttribute('role','group');row.setAttribute('aria-label',clip.title);
@@ -19,7 +19,13 @@ function row(clip,index){
  play.addEventListener('click',()=>{window.nativeClicks=(window.nativeClicks||0)+1; const active=play.getAttribute('aria-label').startsWith('Pause');play.setAttribute('aria-label',(active?'Play ':'Pause ')+clip.title);});left.append(play);
  const center=document.createElement('div');center.className='e3ya7512';
  const title=document.createElement('div');title.className='clip-title-wrapper';const link=document.createElement('a');link.href='/song/'+clip.id;link.textContent=clip.title;title.append(link);
- const metadata=document.createElement('div');metadata.textContent=(clip.display_tags||clip.metadata.tags||'').slice(0,100);metadata.style.cssText='color:#aaa;font-size:12px;overflow:hidden;max-height:34px';center.append(title,metadata);
+ const primary=document.createElement('div');primary.className='e3ya7510';
+ const titleLine=document.createElement('div');titleLine.className='title-line flex items-center gap-2';
+ const titleOwner=document.createElement('div');titleOwner.className='title-owner e1pu7g6n15';titleOwner.append(title);
+ const model=document.createElement('span');model.className='model-badge';model.textContent='V5.5';
+ const cover=document.createElement('span');cover.className='cover-badge';cover.textContent='COVER';
+ titleLine.append(titleOwner,model,cover);primary.append(titleLine);
+ const metadata=document.createElement('div');metadata.textContent=(clip.display_tags||clip.metadata.tags||'').slice(0,100);metadata.style.cssText='color:#aaa;font-size:12px;overflow:hidden;max-height:34px';center.append(primary,metadata);
  const right=document.createElement('div');right.className='right';right.innerHTML='<span>3:56</span><div class="actions"><button class="hover-only" aria-label="Remix">Remix</button><button aria-label="Like">♡</button><button aria-label="More options">•••</button></div>';
  row.append(left,center,right);li.append(row);return li;
 }
@@ -58,6 +64,11 @@ function row(clip,index){
   await page.getByRole('button',{name:'Grid',exact:true}).click();
   await page.waitForFunction(()=>document.querySelectorAll('.sag-media img').length===6);
   assert.equal(await page.locator('.sag-media').count(),6);
+  const titleLayout=await page.locator('.title-line').first().evaluate(line=>{
+    const title=line.querySelector('.title-owner').getBoundingClientRect(),model=line.querySelector('.model-badge').getBoundingClientRect(),cover=line.querySelector('.cover-badge').getBoundingClientRect();
+    return {fullWidth:Math.abs(title.width-line.getBoundingClientRect().width)<1,below:model.top>=title.bottom,sameRow:Math.abs(model.top-cover.top)<1};
+  });
+  assert.deepEqual(titleLayout,{fullWidth:true,below:true,sameRow:true},'Grid title fills width with badges on the next row');
   const rects=await page.locator('ul>li').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width};}));
   assert(rects[0].x<rects[1].x && rects[0].y===rects[1].y,'Desktop cards should form a grid');
   await page.locator('.sag-media').first().click();
@@ -67,6 +78,7 @@ function row(clip,index){
   await page.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='list');
   assert.equal(await page.locator('.sag-media').first().isVisible(),false);
   assert.equal(await page.locator('ul').evaluate(n=>getComputedStyle(n).display),'flex');
+  assert.equal(await page.locator('.title-line').first().evaluate(line=>getComputedStyle(line).flexWrap),'nowrap','List retains its horizontal title row');
   await page.getByRole('button',{name:'Grid',exact:true}).click();
   await page.evaluate(({clip,rowSource})=>document.querySelector('ul').append(window.createRow(clip,6)),{clip:clips[6]});
   await page.waitForFunction(()=>document.querySelectorAll('.sag-media img').length===7);
@@ -115,7 +127,13 @@ function row(clip,index){
   await playlistPage.evaluate(({clip,rowSource,data})=>{
     document.querySelector('[aria-label="Shuffle album"]').setAttribute('aria-label','Shuffle playlist');
     const li=eval('('+rowSource+')')(clip,0);const native=li.querySelector('.track');native.classList.add('clip-image-container');native.setAttribute('role','button');
-    const checkbox=document.createElement('button');checkbox.setAttribute('aria-label','Select clip');checkbox.addEventListener('click',()=>window.selectionClicks=(window.selectionClicks||0)+1);native.before(checkbox);document.querySelector('ul').append(li);
+    const checkbox=document.createElement('button');checkbox.setAttribute('aria-label','Select clip');checkbox.addEventListener('click',()=>window.selectionClicks=(window.selectionClicks||0)+1);native.before(checkbox);
+    const right=li.querySelector('.right');right.classList.add('e1pu7g6n5');
+    const actions=right.querySelector('.actions');
+    const wrap=document.createElement('div');wrap.className='w-full items-center gap-1 md:grid';wrap.style.cssText='display:grid;grid-template-columns:1fr 1fr 12.5rem';
+    const metadata=document.createElement('div');metadata.className='hidden md:contents';metadata.style.display='contents';
+    metadata.innerHTML='<div class="duration">3:56</div><div class="relative-date">1w ago</div>';
+    wrap.append(metadata,actions);right.replaceChildren(wrap);document.querySelector('ul').append(li);
     window.liveSettings={enablePlaylists:false,videoPreviews:true,compactIndicator:true};window.views={album:'list',playlist:'list'};window.artworkRequests=0;
     window.sunoAlbumGridTransport={getSettings:async()=>window.liveSettings,getMode:async kind=>window.views[kind],setMode:async(value,kind)=>window.views[kind]=value,onSettingsChanged:fn=>window.settingsChanged=fn,getAlbumPage:async()=>{window.artworkRequests++;return data;}};
   },{clip:clips[0],rowSource:row.toString(),data:album});
@@ -126,6 +144,23 @@ function row(clip,index){
   await playlistPage.getByRole('group',{name:'Playlist view',exact:true}).waitFor();
   assert.equal(await playlistPage.locator('.album-controls > .sag-toolbar').count(),1);
   await playlistPage.getByRole('button',{name:'Grid',exact:true}).click();await playlistPage.locator('.sag-media img').waitFor();
+  assert.equal(await playlistPage.locator('.relative-date').isVisible(),false,'Date is hidden in Grid');
+  assert.equal(await playlistPage.getByRole('button',{name:'Remix',exact:true}).count(),0,'Remix card button is hidden in Grid');
+  assert.equal(await playlistPage.locator('.duration').isVisible(),true,'Duration remains visible');
+  for(const width of [1100,400]) {
+    await playlistPage.setViewportSize({width,height:900});
+    const contained=await playlistPage.locator('.clip-row-collection').evaluate(row=>{
+      const card=row.getBoundingClientRect(),menu=row.querySelector('[aria-label="More options"]').getBoundingClientRect();
+      return menu.right <= card.right && menu.left >= card.left;
+    });
+    assert(contained,'More options stays inside the card at width '+width);
+  }
+  await playlistPage.getByRole('button',{name:'List',exact:true}).click();
+  await playlistPage.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='list');
+  assert.equal(await playlistPage.locator('.relative-date').isVisible(),true,'Date returns in List');
+  assert.equal(await playlistPage.getByRole('button',{name:'Remix',exact:true}).isVisible(),true,'Remix returns in List');
+  await playlistPage.getByRole('button',{name:'Grid',exact:true}).click();
+  await playlistPage.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='grid');
   await playlistPage.locator('.sag-media').click();await playlistPage.waitForFunction(()=>window.nativeClicks===1);
   assert.equal(await playlistPage.evaluate(()=>window.selectionClicks||0),0,'Playlist cover click must not select the row');
   await playlistPage.emulateMedia({reducedMotion:'no-preference'});await playlistPage.locator('.sag-media').hover();

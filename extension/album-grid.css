@@ -47,3 +47,34 @@ ul[data-sag-view="grid"] .sag-media { display:block; }
 .sag-controls-row { flex-wrap:wrap !important; gap:12px !important; }
 .sag-toolbar.sag-toolbar-inline { margin:0 0 0 auto; flex:0 1 auto; max-width:100%; align-self:center; }
 .sag-toolbar .sag-status:empty { display:none; }
+
+/* Keep Grid cards compact; native List view retains its date and Remix. */
+ul[data-sag-view="grid"] .clip-row-collection .e1pu7g6n5 [class~="md:contents"] > :nth-child(2) {
+  display:none !important;
+}
+ul[data-sag-view="grid"] .clip-row-collection button[aria-label="Remix"],
+ul[data-sag-view="grid"] .clip-row-collection .remix-menu-trigger,
+ul[data-sag-view="grid"] .clip-row-collection .e1pu7g6n5 span.hover-only:has(button[aria-label="Remix"]) {
+  display:none !important;
+}
+ul[data-sag-view="grid"] .clip-row-collection .e1pu7g6n5 > .w-full {
+  display:flex !important;
+  flex-wrap:wrap !important;
+  justify-content:space-between !important;
+  min-width:0 !important;
+  gap:8px !important;
+}
+
+/* Let titles fill the card; keep model/cover badges together below them. */
+ul[data-sag-view="grid"] .clip-row-collection .e3ya7510 > div:has(> .e1pu7g6n15 .clip-title-wrapper) {
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:flex-start !important;
+  gap:4px 8px !important;
+}
+ul[data-sag-view="grid"] .clip-row-collection .e3ya7510 > div > .e1pu7g6n15:has(.clip-title-wrapper) {
+  flex:0 0 100% !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+}
