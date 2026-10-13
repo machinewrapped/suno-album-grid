@@ -2,12 +2,12 @@
 
 Name: Album Grid for Suno
 Suggested slug: album-grid-for-suno
-Version: 1.0.0
+Version: 1.0.1
 Summary: Browse Suno albums with a remembered List/Grid selector, playable video covers and smaller bottom-right now-playing icons. Unofficial.
 Category: Appearance (and Music & Video if offered)
 License: MIT
 Platform: Firefox desktop; Windows, macOS and Linux. Android has not been validated.
-Data disclosure: Required browsingActivity, solely for Suno album/media requests. No developer analytics or telemetry.
+Data disclosure: none. No browsing-history reporting, developer analytics or telemetry. Ordinary album artwork/media requests go directly to Suno.
 Privacy policy: Paste docs/PRIVACY.md into the listing privacy-policy field.
 Support contact: Use the publishing account's preferred public support contact or a repository URL after a remote repository exists. No contact information has been invented.
 
@@ -41,6 +41,6 @@ Test using a public Suno album, for example https://suno.com/album/f13881c5-7e76
 6. Navigate to another album without a full reload; the selector remains functional and the choice persists.
 7. In Suno's artist Songs grid, start a track with video artwork. Its native Now playing indicator should be 34px square at bottom-right, with a 12px icon, rather than the original 68px/24px centered indicator.
 
-API reads are anonymous GET requests restricted to the public album endpoint. The background listener validates sender origin, album identifier and page number, and returns only artwork metadata. browsingActivity is declared because the album identifier sent to Suno reveals the currently viewed album. Private browsing is disabled to avoid persisting session-derived preferences there.
+API reads are anonymous GET requests restricted to the public album endpoint. The background listener validates sender origin, album identifier and page number, and returns only artwork metadata. The manifest declares none: album and CDN URLs are ordinary resource retrieval, not browsing-history reports, analytics, or a developer-operated collection service. No visited-page URL is attached as telemetry, and no account identifiers or browsing-history records are transmitted. Private browsing is disabled to avoid persisting session-derived preferences there.
 
 Manual validation: the owner confirmed that the temporary extension works in their Firefox, including a narrow viewport. Automated coverage includes layout, native playback delegation, SPA navigation, failure fallback, video lifecycle and the compact native indicator.

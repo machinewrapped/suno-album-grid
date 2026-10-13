@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 — 2026-10-13
+
+- Corrected the data-collection declaration to none. Normal Suno artwork/media retrieval had been overclassified as browsing-activity collection; no tracking code was present or removed.
+- Clarified the privacy policy and reviewer notes while retaining anonymous public artwork requests.
+
 ## 1.0.0 — 2026-10-13
 
 - First public-release package.

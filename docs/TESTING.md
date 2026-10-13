@@ -1,4 +1,4 @@
-# Release validation — 1.0.0
+# Release validation — 1.0.1
 
 Validated on 13 October 2026.
 
@@ -10,6 +10,6 @@ Validated on 13 October 2026.
 
 Automated fixtures use invented track metadata and stub video playback for deterministic offline testing. They do not claim to reproduce every future Suno UI change or to replace manual testing against the live site.
 
-The release runtime behavior matches the working prototype. Release changes include the name/version, original icons, privacy/compatibility manifest fields, documentation and packaging. The gecko_android minimum is declared as 142 to keep Mozilla validation accurate for its data-consent API; Android remains unvalidated and should not be selected for the AMO release.
+The release runtime behavior matches the working prototype. Release changes include the name/version, original icons, privacy/compatibility manifest fields (including the corrected no-data-collection declaration), documentation and packaging. The gecko_android minimum is declared as 142 to keep Mozilla validation accurate for its data-consent API; Android remains unvalidated and should not be selected for the AMO release.
 
 The ZIP is unsigned. Public AMO publication and Mozilla signing have not happened yet.

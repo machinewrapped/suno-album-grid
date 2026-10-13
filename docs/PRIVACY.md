@@ -1,8 +1,8 @@
 # Privacy policy — Album Grid for Suno
 
-Effective date: 13 October 2026. Version: 1.0.0.
+Effective date: 13 October 2026. Version: 1.0.1.
 
-The developer receives no user data and operates no backend for this extension. The extension includes no analytics, advertising, telemetry, tracking identifiers or remote executable code.
+The extension does not collect or report browsing history, usage analytics, account information or other personal data. The developer receives no user data and operates no backend for this extension. The extension includes no analytics, advertising, telemetry, tracking identifiers or remote executable code.
 
 ## Local storage
 
@@ -16,6 +16,6 @@ These requests are used only to display the album artwork and video covers. The 
 
 ## Permissions and control
 
-Storage remembers the selected view. Access to suno.com modifies the album presentation and playback indicator. Access to studio-api.prod.suno.com retrieves public album artwork metadata. Firefox's installation disclosure declares the browsing-activity data used by these requests.
+Storage remembers the selected view. Access to suno.com modifies the album presentation and playback indicator. Access to studio-api.prod.suno.com retrieves public album artwork metadata. The manifest declares no data collection. Ordinary requests for the chosen album's artwork and media remain necessary to display them; this declaration does not mean that the extension works offline or that Suno never receives web requests.
 
 Select List to stop cover previews; disable or remove the extension to stop its enhancements and API requests. Previously requested media may remain in the browser cache. Removing the extension removes its local extension storage.

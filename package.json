@@ -1,15 +1,18 @@
 {
-  "name":"album-grid-for-suno",
-  "version":"1.0.0",
-  "private":true,
-  "description":"Unofficial Firefox extension for Suno album grid views and compact playback indicators.",
-  "license":"MIT",
-  "scripts":{
-    "lint":"web-ext lint --source-dir extension --warnings-as-errors",
-    "build":"web-ext build --source-dir extension --artifacts-dir dist --overwrite-dest",
-    "test":"node tests/extension.test.cjs",
-    "test:ui":"node tests/browser.test.cjs",
-    "start":"web-ext run --source-dir extension"
+  "name": "album-grid-for-suno",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Unofficial Firefox extension for Suno album grid views and compact playback indicators.",
+  "license": "MIT",
+  "scripts": {
+    "lint": "web-ext lint --source-dir extension --warnings-as-errors",
+    "build": "web-ext build --source-dir extension --artifacts-dir dist --overwrite-dest",
+    "test": "node tests/extension.test.cjs",
+    "test:ui": "node tests/browser.test.cjs",
+    "start": "web-ext run --source-dir extension"
   },
-  "devDependencies":{"web-ext":"10.7.0","playwright":"1.61.1"}
+  "devDependencies": {
+    "web-ext": "10.7.0",
+    "playwright": "1.61.1"
+  }
 }

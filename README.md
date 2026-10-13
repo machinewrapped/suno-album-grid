@@ -34,7 +34,7 @@ For UI tests, set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to an existing Chromium-ba
 
 The developer operates no server and receives no extension data. No analytics, advertising or telemetry is included. The selected view is stored only in Firefox's local extension storage.
 
-Grid view requests the current album identifier from Suno's public API to obtain artwork, then loads images/videos from Suno's CDN. Requests expose the requested album/media and normal network metadata to Suno. API requests omit cookies and account tokens. The installation disclosure declares browsing activity because these requests identify the Suno album being viewed. See docs/PRIVACY.md.
+Grid view requests the current album identifier from Suno's public API to obtain artwork, then loads images/videos from Suno's CDN. Requests expose the requested album/media and normal network metadata to Suno. API requests omit cookies and account tokens. These are ordinary resource requests to Suno to display the selected album, not browsing-history reporting or analytics. The manifest declares no data collection. See docs/PRIVACY.md.
 
 The only API permission is storage. Host access is limited to suno.com and studio-api.prod.suno.com. The script runs on Suno routes so client-side navigation into an album works; only album lists are rearranged.
 
