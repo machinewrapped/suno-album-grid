@@ -32,11 +32,11 @@ For UI tests, set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to an existing Chromium-ba
 
 ## Privacy and permissions
 
-The developer operates no server and receives no extension data. No analytics, advertising or telemetry is included. The selected view is stored only in Firefox's local extension storage.
+The developer operates no server and receives no extension data. No analytics, advertising or telemetry is included. View preferences and the three options are stored only in Firefox's local extension storage.
 
 Grid view requests the current album identifier from Suno's public API to obtain artwork, then loads images/videos from Suno's CDN. Requests expose the requested album/media and normal network metadata to Suno. API requests omit cookies and account tokens. These are ordinary resource requests to Suno to display the selected album, not browsing-history reporting or analytics. The manifest declares no data collection. See docs/PRIVACY.md.
 
-The only API permission is storage. Host access is limited to suno.com and studio-api.prod.suno.com. The script runs on Suno routes so client-side navigation into an album works; only album lists are rearranged.
+The only API permission is storage. Host access is limited to suno.com and studio-api.prod.suno.com. The script runs on Suno routes so client-side navigation into an album works; album lists and optionally playlist lists are rearranged.
 
 ## Known limits
 
@@ -45,3 +45,9 @@ Public album metadata is required for artwork; private or unpublished albums may
 ## Release
 
 See docs/RELEASE.md and docs/AMO-LISTING.md. For public AMO distribution, keep the existing add-on ID across releases, increment manifest and package versions, validate/test, then upload the build to the existing AMO listing. Mozilla signs the extension and provides automatic updates for listed releases.
+
+## Options and playlists
+
+Open Firefox Add-ons Manager, choose Album Grid for Suno, then Preferences/Options. Enable List/Grid on playlists to extend the selector to public playlist pages. Playlist support defaults to off. You can also disable muted video previews or restore Suno’s original native now-playing indicator. Changes apply to open tabs, and albums and playlists remember their views separately. Use List for selecting/reordering tracks.
+
+If you have an older userContent.css rule forcing the compact indicator, remove that redundant rule to let the extension option restore the native indicator. The extension cannot override a Firefox user stylesheet.

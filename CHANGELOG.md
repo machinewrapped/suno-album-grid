@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-10-13
+
+- Added Firefox Options with opt-in playlist List/Grid support.
+- Added toggles for muted video previews and the compact native now-playing indicator.
+- Apply settings to open tabs and remember album/playlist views separately.
+- Playlist thumbnails invoke native playback rather than the selection checkbox.
+
 ## 1.0.1 — 2026-10-13
 
 - Corrected the data-collection declaration to none. Normal Suno artwork/media retrieval had been overclassified as browsing-activity collection; no tracking code was present or removed.

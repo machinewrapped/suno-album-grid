@@ -109,6 +109,44 @@ function row(clip,index){
   await errorPage.getByRole('button',{name:'List',exact:true}).click();
   await errorPage.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='list');
   assert.equal(await errorPage.locator('ul').getAttribute('data-sag-view'),'list');
+
+  // Playlist support is off until enabled; real playlists put a select checkbox before their play thumbnail.
+  const playlistPage=await context.newPage();await playlistPage.goto('https://suno.com/playlist/2ec001f0-5da3-47bf-bdca-c39dbddd2891');
+  await playlistPage.evaluate(({clip,rowSource,data})=>{
+    document.querySelector('[aria-label="Shuffle album"]').setAttribute('aria-label','Shuffle playlist');
+    const li=eval('('+rowSource+')')(clip,0);const native=li.querySelector('.track');native.classList.add('clip-image-container');native.setAttribute('role','button');
+    const checkbox=document.createElement('button');checkbox.setAttribute('aria-label','Select clip');checkbox.addEventListener('click',()=>window.selectionClicks=(window.selectionClicks||0)+1);native.before(checkbox);document.querySelector('ul').append(li);
+    window.liveSettings={enablePlaylists:false,videoPreviews:true,compactIndicator:true};window.views={album:'list',playlist:'list'};window.artworkRequests=0;
+    window.sunoAlbumGridTransport={getSettings:async()=>window.liveSettings,getMode:async kind=>window.views[kind],setMode:async(value,kind)=>window.views[kind]=value,onSettingsChanged:fn=>window.settingsChanged=fn,getAlbumPage:async()=>{window.artworkRequests++;return data;}};
+  },{clip:clips[0],rowSource:row.toString(),data:album});
+  await playlistPage.addStyleTag({content:css});await playlistPage.addScriptTag({content:js});
+  await playlistPage.waitForFunction(()=>Boolean(window.settingsChanged));await playlistPage.waitForTimeout(50);
+  assert.equal(await playlistPage.locator('.sag-toolbar').count(),0);assert.equal(await playlistPage.evaluate(()=>window.artworkRequests),0);
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,enablePlaylists:true};window.settingsChanged();});
+  await playlistPage.getByRole('group',{name:'Playlist view',exact:true}).waitFor();
+  assert.equal(await playlistPage.locator('.album-controls > .sag-toolbar').count(),1);
+  await playlistPage.getByRole('button',{name:'Grid',exact:true}).click();await playlistPage.locator('.sag-media img').waitFor();
+  await playlistPage.locator('.sag-media').click();await playlistPage.waitForFunction(()=>window.nativeClicks===1);
+  assert.equal(await playlistPage.evaluate(()=>window.selectionClicks||0),0,'Playlist cover click must not select the row');
+  await playlistPage.emulateMedia({reducedMotion:'no-preference'});await playlistPage.locator('.sag-media').hover();
+  await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video')?.paused===false);
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,videoPreviews:false,compactIndicator:false};window.settingsChanged();});
+  await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video').paused && !document.documentElement.hasAttribute('data-sag-compact-icons'));
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,enablePlaylists:false};window.settingsChanged();});
+  await playlistPage.waitForFunction(()=>!document.querySelector('.sag-toolbar'));
+  assert.equal(await playlistPage.locator('.sag-media').count(),0);assert.equal(await playlistPage.locator('ul').getAttribute('data-sag-view'),null);
+  // Options page uses real markup and scripts with mocked Firefox storage.
+  const optionsPage=await context.newPage();await optionsPage.goto('https://suno.com/create');
+  await optionsPage.setContent(fs.readFileSync(path.join(dir,'options/options.html'),'utf8').replace(/<script[^>]*><\/script>/g,''));
+  await optionsPage.evaluate(()=>{window.optionStore={albumView:'grid'};window.browser={storage:{local:{get:async defaults=>({...defaults,...window.optionStore}),set:async values=>Object.assign(window.optionStore,values)}}};});
+  await optionsPage.addStyleTag({content:fs.readFileSync(path.join(dir,'options/options.css'),'utf8')});
+  await optionsPage.addScriptTag({path:path.join(dir,'settings.js')});await optionsPage.addScriptTag({path:path.join(dir,'options/options.js')});
+  await optionsPage.waitForFunction(()=>!document.querySelector('fieldset').disabled);
+  assert.equal(await optionsPage.locator('#enablePlaylists').isChecked(),false);
+  await optionsPage.locator('#enablePlaylists').check();await optionsPage.locator('#videoPreviews').uncheck();await optionsPage.locator('#compactIndicator').uncheck();
+  await optionsPage.getByRole('button',{name:'Save options'}).click();await optionsPage.getByText('Options saved.',{exact:true}).waitFor();
+  const saved=await optionsPage.evaluate(()=>window.optionStore);assert.deepEqual(saved,{albumView:'grid',enablePlaylists:true,videoPreviews:false,compactIndicator:false});
+
   console.log('PASS: desktop/mobile grid, native playback delegation, List restoration, dynamic rows, SPA navigation, duplicate injection, persisted mode, metadata failure, compact native indicator, no script errors.');
  } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

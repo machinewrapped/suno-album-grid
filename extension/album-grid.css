@@ -26,7 +26,7 @@ ul[data-sag-view="grid"] .sag-media { display:block; }
 
 /* Suno: compact now-playing artwork indicator (2026-10-13). */
 
-  .absolute.inset-0.z-20 > button[aria-label="Now playing"] {
+  html[data-sag-compact-icons] .absolute.inset-0.z-20 > button[aria-label="Now playing"] {
     top: auto !important;
     left: auto !important;
     right: 0.5rem !important;
@@ -38,7 +38,7 @@ ul[data-sag-view="grid"] .sag-media { display:block; }
     translate: none !important;
     scale: 1 !important;
   }
-  .absolute.inset-0.z-20 > button[aria-label="Now playing"] > svg {
+  html[data-sag-compact-icons] .absolute.inset-0.z-20 > button[aria-label="Now playing"] > svg {
     width: 0.75rem !important;
     height: 0.75rem !important;
   }

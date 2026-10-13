@@ -10,20 +10,24 @@
   const mounted = new Map();
   const mediaStates = new Set();
   let mode = 'list';
+  let settings = { enablePlaylists:false, videoPreviews:true, compactIndicator:true };
+  let preferencesReady = false;
+  let preferenceRequest = 0;
   let frame = 0;
   let path = location.pathname;
-  const isAlbum = () => /^\/album\/[a-z0-9-]+\/?$/i.test(location.pathname);
-  const albumId = () => location.pathname.split('/')[2];
+  const collectionKind = () => location.pathname.match(/^\/(album|playlist)\/[a-z0-9-]+\/?$/i)?.[1];
+  const isSupportedCollection = () => preferencesReady && (collectionKind() === 'album' || (collectionKind() === 'playlist' && settings.enablePlaylists));
+  const collectionId = () => location.pathname.split('/')[2];
   const setAttr = (node, name, value) => { if (node.getAttribute(name) !== value) node.setAttribute(name, value); };
   const safeMedia = value => {
     try { const url = new URL(value); return url.protocol === 'https:' && /(^|\.)suno\.(ai|com)$/.test(url.hostname) ? url.href : ''; }
     catch { return ''; }
   };
   const getId = row => row.querySelector('a[href*="/song/"]')?.getAttribute('href')?.match(/\/song\/([a-z0-9-]+)/i)?.[1];
-  const getPlay = row => row.querySelector('.e3ya7511 button[aria-label]') || row.querySelector('.clip-image-container[role="button"]');
+  const getPlay = row => row.querySelector('.clip-image-container[role="button"]') || row.querySelector('.e3ya7511 button[aria-label]');
   const pause = state => { if (state.video) state.video.pause(); state.button.classList.remove('sag-video-ready'); };
   const playPreview = state => {
-    if (mode !== 'grid' || !isAlbum() || !state.visible || !state.videoUrl || document.hidden) { pause(state); return; }
+    if (!settings.videoPreviews || mode !== 'grid' || !isSupportedCollection() || !state.visible || !state.videoUrl || document.hidden) { pause(state); return; }
     if (!state.hovered && !state.playing) { pause(state); return; }
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { pause(state); return; }
     if (!state.video) {
@@ -109,7 +113,7 @@
         const total = Number(result.num_total_results);
         if (Number.isFinite(total) && total >= 0) data.total = total;
         data.done = result.playlist_clips.length === 0 || data.fetched >= data.total;
-        if (!isAlbum() || albumId() !== id || mode !== 'grid') break;
+        if (!isSupportedCollection() || collectionId() !== id || mode !== 'grid') break;
       }
     } catch (error) { data.error = true; console.warn('Suno Album Grid: artwork could not be loaded.', error.message); }
     finally { data.busy = false; schedule(); }
@@ -123,7 +127,7 @@
       const button=document.createElement('button'); button.type='button'; button.dataset.view=value;
       const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','none'); svg.setAttribute('stroke','currentColor'); svg.setAttribute('stroke-width','2'); svg.setAttribute('aria-hidden','true');
       const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',shape); svg.append(p); button.append(svg,document.createTextNode(label));
-      button.addEventListener('click',()=>{ mode=value; transport.setMode(value).catch(()=>{}); schedule(); }); toggle.append(button);
+      button.addEventListener('click',()=>{ mode=value; transport.setMode(value, collectionKind()).catch(()=>{}); schedule(); }); toggle.append(button);
     }
     toolbar.append(status,toggle); list.before(toolbar);
     const state={ toolbar,status,toggle }; mounted.set(list,state); return state;
@@ -132,7 +136,7 @@
     const main = list.closest('main');
     // Suno's album header places the playback buttons in an inner group,
     // inside a full-width flex row. Keep the existing controls untouched.
-    const controls = [...(main?.querySelectorAll('button[aria-label="Shuffle album"]') || [])]
+    const controls = [...(main?.querySelectorAll('button[aria-label="Shuffle album"], button[aria-label="Shuffle playlist"]') || [])]
       .map(button => button.parentElement?.parentElement)
       .filter(host => host?.classList.contains('flex') && host.classList.contains('w-full') &&
         host.classList.contains('flex-row') && !host.closest('.clip-row') &&
@@ -148,35 +152,53 @@
   }
   function sync() {
     frame=0; observer.disconnect();
+    document.documentElement.toggleAttribute('data-sag-compact-icons', preferencesReady && settings.compactIndicator);
     try {
-      const candidates=isAlbum() ? [...document.querySelectorAll('main ul')].filter(list=>!list.closest('.scrollbar-hide.absolute') && [...list.children].some(li=>li.querySelector(rowSelector+' a[href*="/song/"]'))) : [];
+      const candidates=isSupportedCollection() ? [...document.querySelectorAll('main ul')].filter(list=>!list.closest('.scrollbar-hide.absolute') && [...list.children].some(li=>li.querySelector(rowSelector+' a[href*="/song/"]'))) : [];
       const current=new Set(candidates);
       for(const [list,state] of mounted) if(!current.has(list)) { list.removeAttribute('data-sag-view'); state.toolbar.remove(); state.host?.classList.remove('sag-controls-row'); mounted.delete(list); }
-      for(const state of mediaStates) if(!state.row.isConnected || !isAlbum() || !current.has(state.row.closest('ul'))) removeMedia(state.row,state);
+      for(const state of mediaStates) if(!state.row.isConnected || !isSupportedCollection() || !current.has(state.row.closest('ul'))) removeMedia(state.row,state);
       for(const list of candidates) {
         const state=toolbarFor(list);
         const {toolbar,status,toggle}=state;
         placeToolbar(list,state);
+        setAttr(toggle,'aria-label',collectionKind() === 'playlist' ? 'Playlist view' : 'Album view');
         setAttr(list,'data-sag-view',mode);
         for(const button of toggle.children) setAttr(button,'aria-pressed',String(button.dataset.view===mode));
-        const data=dataFor(albumId());
+        const data=dataFor(collectionId());
         const rows=[...list.children].map(li=>li.querySelector(rowSelector)).filter(Boolean);
         status.textContent=mode==='grid' ? (data.error ? 'Artwork unavailable — List view still works' : data.busy ? 'Loading artwork…' : '') : '';
         if(mode==='grid') {
           for(const row of rows) attachMedia(row,data.clips.get(getId(row)));
-          loadMetadata(albumId(),rows.map(getId).filter(Boolean));
+          loadMetadata(collectionId(),rows.map(getId).filter(Boolean));
         }
       }
-      if(mode!=='grid' || !isAlbum()) for(const state of mediaStates) pause(state);
+      if(mode!=='grid' || !isSupportedCollection()) for(const state of mediaStates) pause(state);
     } finally { observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','aria-disabled']}); }
   }
   function schedule() { if(!frame) frame=requestAnimationFrame(sync); }
   const observer=new MutationObserver(schedule);
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','aria-disabled']});
-  addEventListener('popstate',schedule);
+  addEventListener('popstate',()=>{path=location.pathname;mode='list';refreshPreferences();schedule();});
   document.addEventListener('visibilitychange',()=>{for(const state of mediaStates) playPreview(state);});
   // A content script's isolated world cannot reliably patch the page's history API.
-  setInterval(()=>{if(location.pathname!==path){path=location.pathname;schedule();}},700);
-  transport.getMode().then(value=>{if(value==='grid'||value==='list') mode=value;schedule();}).catch(schedule);
+  setInterval(()=>{if(location.pathname!==path){path=location.pathname;mode='list';refreshPreferences();schedule();}},700);
+  async function refreshPreferences() {
+    const request = ++preferenceRequest;
+    const currentPath = location.pathname;
+    try {
+      const [storedSettings, value] = await Promise.all([
+        transport.getSettings ? transport.getSettings() : settings,
+        transport.getMode(collectionKind())
+      ]);
+      if (request !== preferenceRequest || currentPath !== location.pathname) return;
+      settings = storedSettings;
+      mode = value === 'grid' ? 'grid' : 'list';
+      preferencesReady = true;
+      schedule();
+    } catch (error) { preferencesReady = true; schedule(); }
+  }
+  transport.onSettingsChanged?.(refreshPreferences);
+  refreshPreferences();
   schedule();
 })();
