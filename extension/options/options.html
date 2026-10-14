@@ -3,7 +3,9 @@
 <body><main><img src="../icons/icon-96.png" width="64" height="64" alt=""><h1>Album Grid for Suno</h1><p>Choose where the grid appears and how artwork behaves.</p>
 <form id="settings"><fieldset disabled><legend>Options</legend>
 <label><input type="checkbox" id="enablePlaylists"> Enable List/Grid on playlists <small>Optional. Albums always have the selector. Albums and playlists remember their views separately.</small></label>
-<label><input type="checkbox" id="videoPreviews"> Play muted video-cover previews <small>On hover or while a track plays. Reduced-motion preferences are always respected.</small></label>
+<label><input type="checkbox" id="videoPreviews"> Play muted video-cover previews while a track plays <small>Reduced-motion preferences are always respected.</small></label>
+<label><input type="checkbox" id="hoverPreviews"> Play muted video-cover previews on hover <small>Independent of track playback. Off by default; reduced-motion preferences are always respected.</small></label>
 <label><input type="checkbox" id="compactIndicator"> Use a smaller bottom-right now-playing indicator <small>Applies to Suno’s native artwork indicator, including artist Songs grids.</small></label>
+<label><input type="checkbox" id="fitSidebarArtwork"> Fit sidebar artwork to the panel width <small>Expand images and video covers to the available sidebar width, preserving a square frame without cropping. Off by default.</small></label>
 <button type="submit">Save options</button></fieldset><p id="status" role="status" aria-live="polite"></p></form>
 <p class="note">Changes apply to open Suno tabs. Settings stay in this Firefox profile. Use List view for selecting or reordering multiple tracks.</p></main><script src="../settings.js"></script><script src="options.js"></script></body></html>

@@ -106,11 +106,42 @@ function row(clip,index){
   assert.deepEqual(errors,[]);
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.locator('.sag-media').nth(1).hover();
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('.sag-media').nth(1).locator('video').count(),0,'Hover previews default off');
+  await page.locator('.sag-media').nth(1).click();
   await page.waitForFunction(()=>{const video=document.querySelectorAll('.sag-media')[1]?.querySelector('video');return video && video.readyState>=2 && !video.paused;},{},{timeout:20000});
   assert.equal(await page.locator('.sag-media').nth(1).locator('video').evaluate(v=>v.muted),true);
   await page.getByRole('button',{name:'List',exact:true}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('.sag-media video')].every(v=>v.paused));
   await page.getByRole('button',{name:'Grid',exact:true}).click();
+  // Custom still covers must never become generated lyrics videos on hover or playback.
+  const coverPage=await context.newPage();await coverPage.goto(url);
+  await coverPage.emulateMedia({reducedMotion:'no-preference'});
+  const coverClips=clips.slice(0,3).map((clip,index)=>({...clip,
+    video_url:'https://cdn1.suno.ai/lyrics-'+index+'.mp4',
+    video_cover_url:index===0?'':clip.video_cover_url,
+    metadata:index===2?{video_to_song_video_upload_url:'https://cdn1.suno.ai/uploaded-cover.mp4'}:{}
+  }));
+  await coverPage.evaluate(({clips,rowSource})=>{
+    const createRow=eval('('+rowSource+')');
+    for(const [index,clip] of clips.entries())document.querySelector('ul').append(createRow(clip,index));
+    window.sunoAlbumGridTransport={getSettings:async()=>({videoPreviews:true,hoverPreviews:true}),getMode:async()=>'grid',setMode:async()=>{},getAlbumPage:async()=>({playlist_clips:clips.map(clip=>({clip})),num_total_results:clips.length})};
+  },{clips:coverClips,rowSource:row.toString()});
+  await coverPage.addStyleTag({content:css});await coverPage.addScriptTag({content:js});
+  await coverPage.waitForFunction(()=>document.querySelectorAll('.sag-media img').length===3);
+  const still=coverPage.locator('.sag-media').first();
+  await still.hover();await still.click();
+  await coverPage.waitForFunction(()=>document.querySelector('.sag-media').getAttribute('aria-label').startsWith('Pause'));
+  await coverPage.waitForTimeout(100);
+  assert.equal(await still.locator('video').count(),0,'Still cover stays still on hover and during playback, despite video_url');
+  assert.equal(await still.locator('img').getAttribute('src'),coverClips[0].image_url);
+  for(const [index,expected] of [[1,coverClips[1].video_cover_url],[2,coverClips[2].metadata.video_to_song_video_upload_url]]) {
+    const media=coverPage.locator('.sag-media').nth(index);await media.hover();
+    await coverPage.waitForFunction(index=>document.querySelectorAll('.sag-media')[index]?.querySelector('video')?.paused===false,index);
+    assert.equal(await media.locator('video').getAttribute('src'),expected,'Use custom cover video with native field precedence');
+  }
+  await coverPage.close();
+
   // Separate page proves saved preference is read and failures leave List available.
   const errorPage=await context.newPage();await errorPage.goto(url);
   await errorPage.evaluate(({clip,rowSource})=>{document.querySelector('ul').append(eval('('+rowSource+')')(clip,0));window.sunoAlbumGridTransport={getMode:async()=>localStorage.getItem('testMode'),setMode:async()=>{},getAlbumPage:async()=>{throw new Error('Simulated API outage')}};},{clip:clips[0],rowSource:row.toString()});
@@ -165,7 +196,11 @@ function row(clip,index){
   assert.equal(await playlistPage.evaluate(()=>window.selectionClicks||0),0,'Playlist cover click must not select the row');
   await playlistPage.emulateMedia({reducedMotion:'no-preference'});await playlistPage.locator('.sag-media').hover();
   await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video')?.paused===false);
-  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,videoPreviews:false,compactIndicator:false};window.settingsChanged();});
+  await playlistPage.locator('.sag-media').click();
+  await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video').paused);
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,videoPreviews:false,hoverPreviews:true};window.settingsChanged();});
+  await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video').paused===false);
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,hoverPreviews:false,compactIndicator:false};window.settingsChanged();});
   await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video').paused && !document.documentElement.hasAttribute('data-sag-compact-icons'));
   await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,enablePlaylists:false};window.settingsChanged();});
   await playlistPage.waitForFunction(()=>!document.querySelector('.sag-toolbar'));
@@ -178,9 +213,32 @@ function row(clip,index){
   await optionsPage.addScriptTag({path:path.join(dir,'settings.js')});await optionsPage.addScriptTag({path:path.join(dir,'options/options.js')});
   await optionsPage.waitForFunction(()=>!document.querySelector('fieldset').disabled);
   assert.equal(await optionsPage.locator('#enablePlaylists').isChecked(),false);
+  assert.equal(await optionsPage.locator('#fitSidebarArtwork').isChecked(),false);
+  assert.equal(await optionsPage.locator('#hoverPreviews').isChecked(),false);
+  await optionsPage.locator('#hoverPreviews').check();
+  await optionsPage.locator('#fitSidebarArtwork').check();
   await optionsPage.locator('#enablePlaylists').check();await optionsPage.locator('#videoPreviews').uncheck();await optionsPage.locator('#compactIndicator').uncheck();
   await optionsPage.getByRole('button',{name:'Save options'}).click();await optionsPage.getByText('Options saved.',{exact:true}).waitFor();
-  const saved=await optionsPage.evaluate(()=>window.optionStore);assert.deepEqual(saved,{albumView:'grid',enablePlaylists:true,videoPreviews:false,compactIndicator:false});
+  const saved=await optionsPage.evaluate(()=>window.optionStore);assert.deepEqual(saved,{albumView:'grid',enablePlaylists:true,videoPreviews:false,hoverPreviews:true,compactIndicator:false,fitSidebarArtwork:true});
+
+
+  // Sidebar option works independently of collection Grid support and restores native dimensions.
+  await playlistPage.evaluate(()=>{
+    const sidebar=document.createElement('aside');sidebar.id='sidebar-fixture';sidebar.className='scrollbar-hide absolute';sidebar.style.width='300px';
+    sidebar.innerHTML='<div class="e1iukq1i0" style="padding:16px;display:flex;flex-direction:column"><div class="e5ujhtz0" style="width:126px;height:126px;position:relative;margin:0 auto;flex-shrink:0"><img alt="Test cover" style="width:100%;height:100%;object-fit:cover"><video muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></div></div>';
+    document.body.append(sidebar);
+  });
+  assert.equal(await playlistPage.locator('#sidebar-fixture .e5ujhtz0').evaluate(n=>n.getBoundingClientRect().width),126);
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,fitSidebarArtwork:true};window.settingsChanged();});
+  await playlistPage.waitForFunction(()=>document.documentElement.hasAttribute('data-sag-fit-sidebar'));
+  for(const [width,expected] of [[300,268],[200,168]]) {
+    await playlistPage.locator('#sidebar-fixture').evaluate((n,w)=>n.style.width=w+'px',width);
+    const result=await playlistPage.locator('#sidebar-fixture .e5ujhtz0').evaluate(n=>{const r=n.getBoundingClientRect();return{width:r.width,height:r.height,img:n.querySelector('img').getBoundingClientRect().width,video:n.querySelector('video').getBoundingClientRect().width,fit:getComputedStyle(n.querySelector('video')).objectFit};});
+    assert.deepEqual(result,{width:expected,height:expected,img:expected,video:expected,fit:'contain'});
+  }
+  await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,fitSidebarArtwork:false};window.settingsChanged();});
+  await playlistPage.waitForFunction(()=>!document.documentElement.hasAttribute('data-sag-fit-sidebar'));
+  assert.equal(await playlistPage.locator('#sidebar-fixture .e5ujhtz0').evaluate(n=>n.getBoundingClientRect().width),126);
 
   console.log('PASS: desktop/mobile grid, native playback delegation, List restoration, dynamic rows, SPA navigation, duplicate injection, persisted mode, metadata failure, compact native indicator, no script errors.');
  } finally {await browser.close();}

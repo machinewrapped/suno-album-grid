@@ -78,3 +78,22 @@ ul[data-sag-view="grid"] .clip-row-collection .e3ya7510 > div > .e1pu7g6n15:has(
   max-width:100% !important;
   min-width:0 !important;
 }
+
+/* Optional full-width song artwork in Suno's details sidebar. */
+html[data-sag-fit-sidebar] .scrollbar-hide.absolute .e1iukq1i0 > .e5ujhtz0 {
+  box-sizing:border-box !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:auto !important;
+  aspect-ratio:1 / 1 !important;
+  align-self:stretch !important;
+  margin-inline:0 !important;
+}
+html[data-sag-fit-sidebar] .scrollbar-hide.absolute .e1iukq1i0 > .e5ujhtz0 :is(img, video) {
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  object-fit:contain !important;
+}

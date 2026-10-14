@@ -1,13 +1,13 @@
-Version 1.1.0 adds options and a cleaner Grid layout:
+Version 1.2.1 adds artwork options and fixes video-cover selection:
 
-- Optional List/Grid support for playlists, off by default.
-- Options to control muted video previews and the compact native now-playing indicator; changes apply to open Suno tabs.
-- Separate remembered view preferences for albums and playlists.
-- Full-width titles with model/COVER badges underneath.
-- Relative dates and redundant Remix buttons hidden in Grid; duration, likes and the native More options menu remain available. List view retains its original controls.
+- Optional sidebar artwork sizing: fit images and video covers to the panel width. Off by default.
+- Separate controls for muted previews during playback and on hover. Hover previews default off.
+- Still artwork stays visible when a track has no custom video cover, instead of switching to Suno's generated lyrics video.
+
+Changes apply to open Suno tabs. Existing album/playlist Grid controls and compact playback indicators are preserved.
 
 This release contains the Firefox extension ZIP and its SHA-256 checksum. GitHub also provides source archives.
 
-For temporary testing, select the ZIP directly through Firefox's **Load Temporary Add-on** control on `about:debugging`. Open the extension's **Preferences/Options** to enable playlist support.
+For temporary testing, select the ZIP directly through Firefox's **Load Temporary Add-on** control on `about:debugging`. Open the extension's **Preferences/Options** to configure artwork behavior or enable playlist support.
 
 The ZIP is an **unsigned Mozilla Add-ons submission package**. This GitHub release does not submit to or publish on Mozilla Add-ons. Mozilla signing is required for permanent installation in standard Firefox.

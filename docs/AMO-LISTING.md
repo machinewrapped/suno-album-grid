@@ -2,7 +2,7 @@
 
 Name: Album Grid for Suno
 Suggested slug: album-grid-for-suno
-Version: 1.1.0
+Version: 1.2.1
 Summary: Browse Suno albums with a remembered List/Grid selector, playable video covers and smaller bottom-right now-playing icons. Unofficial.
 Category: Appearance (and Music & Video if offered)
 License: MIT
@@ -15,13 +15,13 @@ Support contact: Use the publishing account's preferred public support contact o
 
 Give Suno albums a useful grid view.
 
-Switch between List and Grid beside the album's playback controls. Grid view displays each track's own artwork, previews video covers silently on hover, and plays tracks through Suno's existing player when you click a thumbnail. Your choice is remembered across albums, and the controls wrap comfortably on narrow screens.
+Switch between List and Grid beside the album's playback controls. Grid view displays each track's own artwork, previews custom video covers silently during playback (with optional hover previews), and plays tracks through Suno's existing player when you click a thumbnail. Your choice is remembered across albums, and the controls wrap comfortably on narrow screens.
 
 The native now-playing indicator is also half its original size and placed at the bottom-right, keeping artwork and videos visible. This improvement applies across Suno, including artist Songs grids.
 
 Existing song links, likes, Remix and menus remain native. Covers stop animating offscreen or in List view, and reduced-motion preferences are respected.
 
-The extension stores only the selected view locally. It requests the current album's public artwork metadata and media from Suno; these requests reveal that album/media to Suno. No analytics, ads or developer-operated servers are included.
+The extension stores view preferences and options locally. It requests the current album's public artwork metadata and media from Suno; these requests reveal that album/media to Suno. No analytics, ads or developer-operated servers are included.
 
 Public album artwork is required. Use List view when reordering tracks. Firefox desktop 140+ is required. Suno changes may occasionally require an extension update.
 
@@ -34,7 +34,7 @@ Readable JavaScript and CSS are included directly in the extension archive. Ther
 Test using a public Suno album, for example https://suno.com/album/f13881c5-7e76-4835-82c5-74d5209972c7. No reviewer account credentials are provided or needed to view a public album; Suno may independently restrict audio playback behind its own sign-in flow.
 
 1. Open the album and switch List/Grid in the header playback row.
-2. Grid should show each rendered track's public artwork. Hover a cover with a video for a muted preview.
+2. Grid should show each rendered track's public artwork. Custom video covers preview silently during playback. Enable hover previews in Options to preview on hover; still covers remain still.
 3. Click a thumbnail: the extension delegates to the existing native Suno play control. It does not independently download or play audio.
 4. Resize the viewport; controls wrap and cards adapt.
 5. Switch to List; the native list presentation returns and previews pause.
@@ -45,6 +45,6 @@ API reads are anonymous GET requests restricted to the public album endpoint. Th
 
 Manual validation: the owner confirmed that the temporary extension works in their Firefox, including a narrow viewport. Automated coverage includes layout, native playback delegation, SPA navigation, failure fallback, video lifecycle and the compact native indicator.
 
-## Version 1.1.0 options
+## Version 1.2.1 options
 
-Firefox Add-ons Manager > Album Grid for Suno > Preferences/Options exposes opt-in playlist List/Grid, muted video previews and the compact native indicator toggle. Playlist support defaults to off. Changes apply to open tabs. Albums and playlists remember views separately. Example playlist: https://suno.com/playlist/2ec001f0-5da3-47bf-bdca-c39dbddd2891. No additional permissions or data collection are introduced.
+Firefox Add-ons Manager > Album Grid for Suno > Preferences/Options exposes opt-in playlist List/Grid, independent playback and hover video previews, the compact native indicator toggle, and optional sidebar artwork sizing. Playlist support, hover previews and sidebar sizing default to off. Changes apply to open tabs. Albums and playlists remember views separately. Example playlist: https://suno.com/playlist/2ec001f0-5da3-47bf-bdca-c39dbddd2891. No additional permissions or data collection are introduced.

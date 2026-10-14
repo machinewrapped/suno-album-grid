@@ -10,7 +10,7 @@
   const mounted = new Map();
   const mediaStates = new Set();
   let mode = 'list';
-  let settings = { enablePlaylists:false, videoPreviews:true, compactIndicator:true };
+  let settings = { enablePlaylists:false, videoPreviews:true, hoverPreviews:false, compactIndicator:true, fitSidebarArtwork:false };
   let preferencesReady = false;
   let preferenceRequest = 0;
   let frame = 0;
@@ -27,8 +27,7 @@
   const getPlay = row => row.querySelector('.clip-image-container[role="button"]') || row.querySelector('.e3ya7511 button[aria-label]');
   const pause = state => { if (state.video) state.video.pause(); state.button.classList.remove('sag-video-ready'); };
   const playPreview = state => {
-    if (!settings.videoPreviews || mode !== 'grid' || !isSupportedCollection() || !state.visible || !state.videoUrl || document.hidden) { pause(state); return; }
-    if (!state.hovered && !state.playing) { pause(state); return; }
+    if (!(settings.videoPreviews && state.playing || settings.hoverPreviews && state.hovered) || mode !== 'grid' || !isSupportedCollection() || !state.visible || !state.videoUrl || document.hidden) { pause(state); return; }
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { pause(state); return; }
     if (!state.video) {
       const video = document.createElement('video');
@@ -82,7 +81,8 @@
         image.addEventListener('error', () => { image.remove(); const p=button.querySelector('.sag-placeholder'); if(p) { p.hidden=false; p.textContent='Artwork unavailable'; } });
         button.querySelector('img')?.remove(); button.insertBefore(image, button.firstChild);
       }
-      const videoUrl = safeMedia(clip.video_cover_url || clip.metadata?.video_to_song_video_upload_url || clip.video_url);
+      // Match Suno's cover selector. video_url can be a generated lyrics video.
+      const videoUrl = safeMedia(clip.metadata?.video_to_song_video_upload_url || clip.video_cover_url);
       if (state.videoUrl !== videoUrl) { pause(state); state.video?.remove(); state.video=null; state.videoUrl=videoUrl; }
       const placeholder=button.querySelector('.sag-placeholder');
       if(placeholder && !imageUrl) placeholder.textContent='Artwork unavailable';
@@ -153,6 +153,7 @@
   function sync() {
     frame=0; observer.disconnect();
     document.documentElement.toggleAttribute('data-sag-compact-icons', preferencesReady && settings.compactIndicator);
+    document.documentElement.toggleAttribute('data-sag-fit-sidebar', preferencesReady && settings.fitSidebarArtwork);
     try {
       const candidates=isSupportedCollection() ? [...document.querySelectorAll('main ul')].filter(list=>!list.closest('.scrollbar-hide.absolute') && [...list.children].some(li=>li.querySelector(rowSelector+' a[href*="/song/"]'))) : [];
       const current=new Set(candidates);

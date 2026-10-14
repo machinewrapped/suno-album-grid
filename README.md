@@ -3,7 +3,7 @@
 An unofficial Firefox extension that makes Suno albums easier to browse.
 
 - List/Grid selector beside the album playback controls, with responsive wrapping.
-- Large per-track artwork and muted video-cover previews on hover or playback.
+- Large per-track artwork and muted video-cover previews during playback, with a separate hover-preview option that defaults off.
 - Thumbnail clicks use Suno's existing player; title links, likes, Remix and menus remain native.
 - Remembers the selected view across albums.
 - Smaller native now-playing indicator, half the original size and anchored bottom-right. This applies across Suno, including the artist Songs grid.
@@ -51,3 +51,5 @@ See docs/RELEASE.md and docs/AMO-LISTING.md. For public AMO distribution, keep t
 Open Firefox Add-ons Manager, choose Album Grid for Suno, then Preferences/Options. Enable List/Grid on playlists to extend the selector to public playlist pages. Playlist support defaults to off. You can also disable muted video previews or restore Suno’s original native now-playing indicator. Changes apply to open tabs, and albums and playlists remember their views separately. Use List for selecting/reordering tracks.
 
 If you have an older userContent.css rule forcing the compact indicator, remove that redundant rule to let the extension option restore the native indicator. The extension cannot override a Firefox user stylesheet.
+
+The optional **Fit sidebar artwork to the panel width** setting expands song-details images and video covers to a responsive square without cropping. It defaults to off and works independently of album/playlist Grid view. If an older userContent.css sidebar-artwork override is still installed, remove that redundant rule to test the option’s off state.

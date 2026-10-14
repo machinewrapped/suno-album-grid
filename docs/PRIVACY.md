@@ -1,12 +1,12 @@
 # Privacy policy — Album Grid for Suno
 
-Effective date: 13 October 2026. Version: 1.1.0.
+Effective date: 14 October 2026. Version: 1.2.1.
 
 The extension does not collect or report browsing history, usage analytics, account information or other personal data. The developer receives no user data and operates no backend for this extension. The extension includes no analytics, advertising, telemetry, tracking identifiers or remote executable code.
 
 ## Local storage
 
-The album and playlist List/Grid preferences and three options (playlist support, video previews and compact indicator) are saved in Firefox's local extension storage. They are not synchronized by this extension or sent to the developer. Album/playlist metadata is held temporarily in memory while a Suno tab is open. The extension does not run in private browsing.
+The album and playlist List/Grid preferences and five options (playlist support, playback video previews, hover video previews, compact indicator and sidebar artwork width) are saved in Firefox's local extension storage. They are not synchronized by this extension or sent to the developer. Album/playlist metadata is held temporarily in memory while a Suno tab is open. The extension does not run in private browsing.
 
 ## Requests to Suno
 
@@ -16,6 +16,6 @@ These requests are used only to display the album artwork and video covers. The 
 
 ## Permissions and control
 
-Storage remembers view preferences and the three options. Access to suno.com modifies the album presentation and playback indicator. Access to studio-api.prod.suno.com retrieves public album artwork metadata. The manifest declares no data collection. Ordinary requests for the chosen album's artwork and media remain necessary to display them; this declaration does not mean that the extension works offline or that Suno never receives web requests.
+Storage remembers view preferences and the five options. Access to suno.com modifies the album presentation and playback indicator. Access to studio-api.prod.suno.com retrieves public album artwork metadata. The manifest declares no data collection. Ordinary requests for the chosen album's artwork and media remain necessary to display them; this declaration does not mean that the extension works offline or that Suno never receives web requests.
 
 Select List to stop cover previews; disable or remove the extension to stop its enhancements and API requests. Previously requested media may remain in the browser cache. Removing the extension removes its local extension storage.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 — 2026-10-14
+
+- Separate hover video previews from playback previews; hover defaults off.
+
+- Keep still artwork on hover/playback when no custom video cover exists; never fall back to generated lyrics videos.
+
+- Add an opt-in setting to fit details-sidebar image/video artwork to the panel width. Applies live and restores native sizing when disabled.
+
 ## 1.1.0 — 2026-10-13
 
 - Stack model/cover badges below the full-width title in Grid.
