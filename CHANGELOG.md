@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.3 — Unreleased
+## 1.2.2 — 2026-10-16
 
 - Restore full-width Grid titles, hide relative dates and native thumbnail rails, and keep actions inside cards after Suno renamed its generated classes. Use structural selectors for these rules.
 - Hide the native album track-number rail in Grid and preserve native playback delegation after rail class changes. List retains track numbers.

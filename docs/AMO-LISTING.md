@@ -2,7 +2,7 @@
 
 Name: Album Grid for Suno
 Suggested slug: album-grid-for-suno
-Version: 1.2.1
+Version: 1.2.2
 Summary: Browse Suno albums with a remembered List/Grid selector, playable video covers and smaller bottom-right now-playing icons. Unofficial.
 Category: Appearance (and Music & Video if offered)
 License: MIT
@@ -45,6 +45,6 @@ API reads are anonymous GET requests restricted to the public album endpoint. Th
 
 Manual validation: the owner confirmed that the temporary extension works in their Firefox, including a narrow viewport. Automated coverage includes layout, native playback delegation, SPA navigation, failure fallback, video lifecycle and the compact native indicator.
 
-## Version 1.2.1 options
+## Version 1.2.2 options
 
 Firefox Add-ons Manager > Album Grid for Suno > Preferences/Options exposes opt-in playlist List/Grid, independent playback and hover video previews, the compact native indicator toggle, and optional sidebar artwork sizing. Playlist support, hover previews and sidebar sizing default to off. Changes apply to open tabs. Albums and playlists remember views separately. Example playlist: https://suno.com/playlist/2ec001f0-5da3-47bf-bdca-c39dbddd2891. No additional permissions or data collection are introduced.

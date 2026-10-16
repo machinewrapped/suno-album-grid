@@ -1,6 +1,6 @@
-# Release validation — 1.2.1
+# Release validation — 1.2.2
 
-Validated on 14 October 2026.
+Validated on 16 October 2026.
 
 - Mozilla web-ext 10.7.0 lint: 0 errors, 0 warnings, 0 notices.
 - Request/storage/release unit tests: 10 passed. Covers restricted origin and endpoint inputs, anonymous API reads, metadata minimization, failure handling, local preference storage and manifest/version consistency.
@@ -11,6 +11,7 @@ Validated on 14 October 2026.
 
 Automated fixtures use invented track metadata and stub video playback for deterministic offline testing. They do not claim to reproduce every future Suno UI change or to replace manual testing against the live site.
 
-The owner approved the tested 1.2.1 changes for release. The gecko_android minimum is declared as 142 to keep Mozilla validation accurate for its data-consent API; Android remains unvalidated and should not be selected for the AMO release.
+The owner approved the tested 1.2.2 changes for release. The gecko_android minimum is declared as 142 to keep Mozilla validation accurate for its data-consent API; Android remains unvalidated and should not be selected for the AMO release.
 
 The ZIP is unsigned. Public AMO publication and Mozilla signing have not happened yet.
+Grid regression checks cover renamed Suno classes, full-width titles, hidden dates/native rails, native playback delegation and List restoration. The rendered public album and playlist were also checked in isolated Chrome, including hover and List restoration; this is separate from the owner's Firefox live-test approval.

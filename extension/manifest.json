@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Album Grid for Suno",
-  "version": "1.2.3",
+  "version": "1.2.2",
   "description": "Unofficial Suno enhancement: album List/Grid views, playable video artwork and smaller bottom-right now-playing icons.",
   "permissions": [
     "storage"
