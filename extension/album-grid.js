@@ -24,7 +24,13 @@
     catch { return ''; }
   };
   const getId = row => row.querySelector('a[href*="/song/"]')?.getAttribute('href')?.match(/\/song\/([a-z0-9-]+)/i)?.[1];
-  const getPlay = row => row.querySelector('.clip-image-container[role="button"]') || row.querySelector('.e3ya7511 button[aria-label]');
+  function getNativeRail(row) {
+    let center = row.querySelector('.clip-title-wrapper');
+    while (center && center.parentElement !== row) center = center.parentElement;
+    const rail = center?.previousElementSibling;
+    return rail && !rail.classList.contains('sag-media') ? rail : null;
+  }
+  const getPlay = row => row.querySelector('.clip-image-container[role="button"]') || getNativeRail(row)?.querySelector('button[aria-label][aria-disabled]');
   const pause = state => { if (state.video) state.video.pause(); state.button.classList.remove('sag-video-ready'); };
   const playPreview = state => {
     if (!(settings.videoPreviews && state.playing || settings.hoverPreviews && state.hovered) || mode !== 'grid' || !isSupportedCollection() || !state.visible || !state.videoUrl || document.hidden) { pause(state); return; }
@@ -49,8 +55,11 @@
   }, { threshold: 0.05 });
   function removeMedia(row, state) {
     pause(state); visibility.unobserve(state.button); state.button.remove(); mediaStates.delete(state);
+    for (const child of row.children) child.removeAttribute('data-sag-native-rail');
   }
   function attachMedia(row, clip) {
+    const rail = getNativeRail(row);
+    for (const child of row.children) child.toggleAttribute('data-sag-native-rail', child === rail);
     let button = [...row.children].find(node => node.classList.contains('sag-media'));
     const id = getId(row);
     if (button && button.sagState.id !== id) { removeMedia(row, button.sagState); button = null; }
