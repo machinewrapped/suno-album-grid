@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3 — 2026-10-17
+
+- Restore optional sidebar artwork sizing after Suno class changes. Identify the cover from its descriptive image text without requiring a song-title link or a playing video; mark it ourselves, handle video insertion/removal and panel replacement, and leave ambiguous artwork unchanged.
+
 ## 1.2.2 — 2026-10-16
 
 - Restore full-width Grid titles, hide relative dates and native thumbnail rails, and keep actions inside cards after Suno renamed its generated classes. Use structural selectors for these rules.

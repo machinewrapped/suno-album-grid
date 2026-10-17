@@ -1,10 +1,11 @@
-Version 1.2.2 restores Grid layout after Suno changed its generated class names:
+Version 1.2.3 restores the optional full-width sidebar artwork setting after Suno changed its generated classes.
 
-- Titles fill the card width, with model/COVER badges below.
-- Relative dates and duplicate native thumbnails stay hidden in Grid.
-- Native album track-number/play controls stay hidden in Grid, including on hover. Artwork clicks still delegate to Suno's player.
-- Card actions stay within the card, and List view retains its native layout and controls.
-- Structural selectors and extension-owned rail markers replace the affected generated-class selectors.
+- Identify song artwork from its descriptive image text and mark the container ourselves, rather than depending on generated class names.
+- Support still artwork without a song-title link or video, and video covers inserted during playback.
+- Reapply sizing when Suno replaces the details panel; restore native sizing when the option is disabled.
+- Leave ambiguous artwork unchanged.
+
+Enable **Fit sidebar artwork to the panel width** in the extension's Preferences/Options. This option remains off by default.
 
 This release contains the Firefox extension ZIP and its SHA-256 checksum. GitHub also provides source archives.
 

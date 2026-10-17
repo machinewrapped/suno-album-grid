@@ -159,11 +159,40 @@
       if (state.toolbar.parentElement !== controls) controls.append(state.toolbar);
     } else if (state.toolbar.nextElementSibling !== list) list.before(state.toolbar);
   }
+  function syncSidebarArtwork() {
+    const matches = new Set();
+    if (preferencesReady && settings.fitSidebarArtwork) {
+      for (const panel of document.querySelectorAll('.scrollbar-hide.absolute, aside, [role="complementary"]')) {
+        const titles = [...panel.querySelectorAll('a[href*="/song/"]')].filter(link => {
+          try { return /^\/song\/[a-z0-9-]+\/?$/i.test(new URL(link.href).pathname); }
+          catch { return false; }
+        }).map(link => link.textContent.trim()).filter(Boolean);
+        const covers = new Set();
+        for (const image of panel.querySelectorAll('img[alt]')) {
+          if (image.closest('a, button, .clip-row, [data-sag-owned]')) continue;
+          const alt = image.alt.trim();
+          const matchesTitle = titles.some(title => alt === title || alt.endsWith(' ' + title));
+          const describesCover = /^Image for\s+\S/.test(alt) && safeMedia(image.getAttribute('data-src') || image.currentSrc || image.src);
+          if (!matchesTitle && !describesCover) continue;
+          const container = image.parentElement;
+          if (container?.tagName !== 'DIV' || container.querySelectorAll(':scope > img').length !== 1) continue;
+          covers.add(container);
+        }
+        // A changed or ambiguous panel keeps its native sizing.
+        if (covers.size === 1) matches.add([...covers][0]);
+      }
+    }
+    for (const node of document.querySelectorAll('[data-sag-sidebar-artwork]')) {
+      if (!matches.has(node)) node.removeAttribute('data-sag-sidebar-artwork');
+    }
+    for (const node of matches) setAttr(node, 'data-sag-sidebar-artwork', '');
+  }
   function sync() {
     frame=0; observer.disconnect();
     document.documentElement.toggleAttribute('data-sag-compact-icons', preferencesReady && settings.compactIndicator);
     document.documentElement.toggleAttribute('data-sag-fit-sidebar', preferencesReady && settings.fitSidebarArtwork);
     try {
+      syncSidebarArtwork();
       const candidates=isSupportedCollection() ? [...document.querySelectorAll('main ul')].filter(list=>!list.closest('.scrollbar-hide.absolute') && [...list.children].some(li=>li.querySelector(rowSelector+' a[href*="/song/"]'))) : [];
       const current=new Set(candidates);
       for(const [list,state] of mounted) if(!current.has(list)) { list.removeAttribute('data-sag-view'); state.toolbar.remove(); state.host?.classList.remove('sag-controls-row'); mounted.delete(list); }
@@ -184,11 +213,11 @@
         }
       }
       if(mode!=='grid' || !isSupportedCollection()) for(const state of mediaStates) pause(state);
-    } finally { observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','aria-disabled']}); }
+    } finally { observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','aria-disabled','alt','href','data-src']}); }
   }
   function schedule() { if(!frame) frame=requestAnimationFrame(sync); }
   const observer=new MutationObserver(schedule);
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','aria-disabled']});
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','aria-disabled','alt','href','data-src']});
   addEventListener('popstate',()=>{path=location.pathname;mode='list';refreshPreferences();schedule();});
   document.addEventListener('visibilitychange',()=>{for(const state of mediaStates) playPreview(state);});
   // A content script's isolated world cannot reliably patch the page's history API.

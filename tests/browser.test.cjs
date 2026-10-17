@@ -1,7 +1,7 @@
 const fs=require('fs');
 const path=require('path');
 const assert=require('assert/strict');
-const {chromium}=require('playwright');
+const {chromium,firefox}=require('playwright');
 const dir=path.resolve(__dirname,'../extension');
 fs.mkdirSync(path.resolve(__dirname,'../artifacts'),{recursive:true});
 const css=fs.readFileSync(path.join(dir,'album-grid.css'),'utf8');
@@ -30,7 +30,8 @@ function row(clip,index){
  row.append(left,center,right);li.append(row);return li;
 }
 (async()=>{
- const browser=await chromium.launch({...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}),headless:true});
+ const useFirefox=process.env.PLAYWRIGHT_BROWSER==='firefox';
+ const browser=await (useFirefox?firefox:chromium).launch({...(!useFirefox&&process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}),headless:true});
  try{
   const context=await browser.newContext({viewport:{width:1100,height:1000},reducedMotion:'reduce'});
   await context.addInitScript(()=>{
@@ -199,6 +200,7 @@ function row(clip,index){
   await playlistPage.waitForFunction(()=>document.querySelector('ul').dataset.sagView==='grid');
   await playlistPage.locator('.sag-media').click();await playlistPage.waitForFunction(()=>window.nativeClicks===1);
   assert.equal(await playlistPage.evaluate(()=>window.selectionClicks||0),0,'Playlist cover click must not select the row');
+  await playlistPage.mouse.move(0,0);
   await playlistPage.emulateMedia({reducedMotion:'no-preference'});await playlistPage.locator('.sag-media').hover();
   await playlistPage.waitForFunction(()=>document.querySelector('.sag-media video')?.paused===false);
   await playlistPage.locator('.sag-media').click();
@@ -230,20 +232,41 @@ function row(clip,index){
   // Sidebar option works independently of collection Grid support and restores native dimensions.
   await playlistPage.evaluate(()=>{
     const sidebar=document.createElement('aside');sidebar.id='sidebar-fixture';sidebar.className='scrollbar-hide absolute';sidebar.style.width='300px';
-    sidebar.innerHTML='<div class="e1iukq1i0" style="padding:16px;display:flex;flex-direction:column"><div class="e5ujhtz0" style="width:126px;height:126px;position:relative;margin:0 auto;flex-shrink:0"><img alt="Test cover" style="width:100%;height:100%;object-fit:cover"><video muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></div></div>';
+    sidebar.innerHTML='<div class="renamed-detail-body" style="padding:16px;display:flex;flex-direction:column"><div class="extra-wrapper"><div class="test-sidebar-cover css-1871jqf e11it12s0" style="width:126px;height:126px;position:relative;margin:0 auto;flex-shrink:0"><img alt="Image for Test song" data-src="https://cdn2.suno.ai/demo-cover.svg" style="width:100%;height:100%;object-fit:cover"><div class="absolute inset-0 h-full w-full object-cover" style="position:absolute;inset:0;width:100%;height:100%"></div></div></div><h2 contenteditable="true">Test song</h2><a href="/@example"><img class="avatar" src="https://cdn2.suno.ai/demo-avatar.svg" alt="Test song" style="width:24px;height:24px"></a></div>';
     document.body.append(sidebar);
   });
-  assert.equal(await playlistPage.locator('#sidebar-fixture .e5ujhtz0').evaluate(n=>n.getBoundingClientRect().width),126);
+  await playlistPage.waitForFunction(()=>document.querySelector('#sidebar-fixture .avatar').complete && document.querySelector('#sidebar-fixture .avatar').naturalWidth>0);
+  assert.equal(await playlistPage.locator('#sidebar-fixture .test-sidebar-cover').evaluate(n=>n.getBoundingClientRect().width),126);
   await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,fitSidebarArtwork:true};window.settingsChanged();});
-  await playlistPage.waitForFunction(()=>document.documentElement.hasAttribute('data-sag-fit-sidebar'));
+  await playlistPage.waitForFunction(()=>document.querySelector('#sidebar-fixture [data-sag-sidebar-artwork]'));
+  assert.equal(await playlistPage.locator('#sidebar-fixture video').count(),0,'Still artwork is identified without a video or title link');
+  assert.equal(await playlistPage.locator('#sidebar-fixture .test-sidebar-cover').evaluate(n=>n.getBoundingClientRect().width),268);
+  await playlistPage.evaluate(()=>{const video=document.createElement('video');video.muted=true;video.style='object-fit:cover;width:100%;height:100%;border-radius:5%';document.querySelector('#sidebar-fixture .absolute.inset-0').append(video);});
+  await playlistPage.waitForFunction(()=>getComputedStyle(document.querySelector('#sidebar-fixture video')).objectFit==='contain');
   for(const [width,expected] of [[300,268],[200,168]]) {
     await playlistPage.locator('#sidebar-fixture').evaluate((n,w)=>n.style.width=w+'px',width);
-    const result=await playlistPage.locator('#sidebar-fixture .e5ujhtz0').evaluate(n=>{const r=n.getBoundingClientRect();return{width:r.width,height:r.height,img:n.querySelector('img').getBoundingClientRect().width,video:n.querySelector('video').getBoundingClientRect().width,fit:getComputedStyle(n.querySelector('video')).objectFit};});
+    const result=await playlistPage.locator('#sidebar-fixture .test-sidebar-cover').evaluate(n=>{const r=n.getBoundingClientRect();return{width:r.width,height:r.height,img:n.querySelector('img').getBoundingClientRect().width,video:n.querySelector('video').getBoundingClientRect().width,fit:getComputedStyle(n.querySelector('video')).objectFit};});
     assert.deepEqual(result,{width:expected,height:expected,img:expected,video:expected,fit:'contain'});
   }
+  await playlistPage.locator('#sidebar-fixture video').evaluate(n=>n.remove());
+  assert.equal(await playlistPage.locator('#sidebar-fixture .test-sidebar-cover').evaluate(n=>n.getBoundingClientRect().width),168,'Removing playback video preserves still-cover sizing');
+  assert.equal(await playlistPage.locator('#sidebar-fixture .avatar').evaluate(n=>n.getBoundingClientRect().width),24,'Avatar remains native');
+  // Replacing the panel and changing generated classes re-identifies the cover.
+  await playlistPage.evaluate(()=>{const old=document.querySelector('#sidebar-fixture');const replacement=old.cloneNode(true);replacement.querySelector('[data-sag-sidebar-artwork]').removeAttribute('data-sag-sidebar-artwork');replacement.querySelector('.test-sidebar-cover').className='test-sidebar-cover entirely-new-generated-class';old.replaceWith(replacement);});
+  await playlistPage.waitForFunction(()=>document.querySelector('#sidebar-fixture .test-sidebar-cover').hasAttribute('data-sag-sidebar-artwork'));
+  // Multiple matching covers are ambiguous: undo sizing instead of guessing.
+  await playlistPage.evaluate(()=>{const cover=document.querySelector('#sidebar-fixture .test-sidebar-cover');const duplicate=cover.cloneNode(true);duplicate.className='duplicate-cover';duplicate.removeAttribute('data-sag-sidebar-artwork');cover.after(duplicate);});
+  await playlistPage.waitForFunction(()=>!document.querySelector('#sidebar-fixture [data-sag-sidebar-artwork]'));
+  assert.equal(await playlistPage.locator('#sidebar-fixture .test-sidebar-cover').evaluate(n=>n.getBoundingClientRect().width),126);
+  await playlistPage.locator('#sidebar-fixture .duplicate-cover').evaluate(n=>n.remove());
+  await playlistPage.waitForFunction(()=>document.querySelector('#sidebar-fixture [data-sag-sidebar-artwork]'));
+  await playlistPage.locator('#sidebar-fixture .test-sidebar-cover > img').evaluate(n=>n.alt='Unrelated image');
+  await playlistPage.waitForFunction(()=>!document.querySelector('#sidebar-fixture [data-sag-sidebar-artwork]'));
+  await playlistPage.locator('#sidebar-fixture .test-sidebar-cover > img').evaluate(n=>n.alt='Image for Test song');
+  await playlistPage.waitForFunction(()=>document.querySelector('#sidebar-fixture [data-sag-sidebar-artwork]'));
   await playlistPage.evaluate(()=>{window.liveSettings={...window.liveSettings,fitSidebarArtwork:false};window.settingsChanged();});
   await playlistPage.waitForFunction(()=>!document.documentElement.hasAttribute('data-sag-fit-sidebar'));
-  assert.equal(await playlistPage.locator('#sidebar-fixture .e5ujhtz0').evaluate(n=>n.getBoundingClientRect().width),126);
+  assert.equal(await playlistPage.locator('#sidebar-fixture .test-sidebar-cover').evaluate(n=>n.getBoundingClientRect().width),126);
 
   console.log('PASS: desktop/mobile grid, native playback delegation, List restoration, dynamic rows, SPA navigation, duplicate injection, persisted mode, metadata failure, compact native indicator, no script errors.');
  } finally {await browser.close();}

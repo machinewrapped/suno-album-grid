@@ -1,6 +1,6 @@
 # Privacy policy — Album Grid for Suno
 
-Effective date: 16 October 2026. Version: 1.2.2.
+Effective date: 17 October 2026. Version: 1.2.3.
 
 The extension does not collect or report browsing history, usage analytics, account information or other personal data. The developer receives no user data and operates no backend for this extension. The extension includes no analytics, advertising, telemetry, tracking identifiers or remote executable code.
 
